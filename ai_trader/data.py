@@ -36,10 +36,10 @@ def get_timeframe_constant(timeframe: str):
     return getattr(mt5, tf_name)
 
 
-def fetch_rates(symbol: str, timeframe: str, months: int) -> pd.DataFrame:
+def fetch_rates(symbol: str, timeframe: str, months: int, initialized: bool = False) -> pd.DataFrame:
     _require_mt5()
 
-    if not mt5.initialize():
+    if not initialized and not mt5.initialize():
         raise RuntimeError(f"MT5 initialize failed: {mt5.last_error()}")
 
     end = datetime.utcnow()
@@ -48,7 +48,8 @@ def fetch_rates(symbol: str, timeframe: str, months: int) -> pd.DataFrame:
     tf = get_timeframe_constant(timeframe)
     rates = mt5.copy_rates_range(symbol, tf, start, end)
 
-    mt5.shutdown()
+    if not initialized:
+        mt5.shutdown()
 
     if rates is None or len(rates) == 0:
         raise RuntimeError(
